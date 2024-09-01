@@ -65,7 +65,7 @@ class Circuito {
 const circuito = new Circuito();
 
 function cargarComponentes() {
-    fetch('components.json')
+    fetch('componentes.json')
         .then(response => response.json())
         .then(data => mostrarComponentesDisponibles(data))
         .catch(error => console.error('Error al cargar los componentes:', error));
