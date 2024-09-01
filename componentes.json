@@ -1,0 +1,31 @@
+[
+    {
+        "tipo": "resistor",
+        "valor": 100,
+        "imagen": "https://imgs.search.brave.com/4UMVs4Bw2kU04CT4T0U9-4ga8KsJGfViB0pth3SxEwQ/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9mZXJy/ZXRyb25pY2EuY29t/L2Nkbi9zaG9wL3By/b2R1Y3RzL3Jlc2lz/dGVuY2lhX21lZGlv/X3dhdHRfZmVycmV0/cm9uaWNhXzg4MmU5/YjA5LTY3MTYtNDU5/NC1hMGI4LWQ3NjNm/MzkxNDMzMV81MTJ4/LmpwZz92PTE1Nzc0/OTY2Mjg"
+     
+    },
+    {
+        "tipo": "bateria",
+        "valor": 9,
+        "imagen": "https://imgs.search.brave.com/GyVXjkzL1tzOkivAmcLTxxN2bvnA3pOcZZcEgf7irSA/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jZG4u/YXdzbGkuY29tLmJy/LzYwMHg0NTAvOTM0/LzkzNDU2MS9wcm9k/dXRvLzIyOTU5NTQz/MWM4NzZjOGM0YTYu/anBn"
+    
+    },
+    {
+        "tipo": "led",
+        "valor": 2,
+        "imagen": "https://imgs.search.brave.com/pCTxgOYqWJdWEXTr5frpgqpS_WSfQLD_kFEH5ydS7j0/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pMC53/cC5jb20vd3d3LnRl/c2xhZWxlY3Ryb25p/Yy5jb20ucGUvd3At/Y29udGVudC91cGxv/YWRzLzIwMTgvMTIv/TGVkLlJvam9fLmpw/Zz9maXQ9NjAwLDYw/MCZzc2w9MQ"
+     
+    },
+    {
+        "tipo": "diodo",
+        "valor": 3,
+        "imagen": "https://imgs.search.brave.com/V3c9amnoEjxfgERnck2KnJ4E7vZ9mT4PHiCHP1vYrpw/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWFn/ZXMtbmEuc3NsLWlt/YWdlcy1hbWF6b24u/Y29tL2ltYWdlcy9J/LzMxNXRqVmxPbzdM/LmpwZw"
+ 
+    },
+    {
+        "tipo": "transformador",
+        "valor": 12,
+        "imagen": "https://imgs.search.brave.com/DTE0STCQuhZWB4Jx3GwX-XKw2YDGInkw77fvrFvPjZo/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9kZXRh/bGhlcy5lZ2l0YW5h/LmVzL2Jvc3MtYnJj/LTIzMF81OWE4MmM4/N2JhN2JlLmpwZw"
+    }
+]
