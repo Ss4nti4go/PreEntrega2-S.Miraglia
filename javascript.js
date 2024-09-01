@@ -1,5 +1,7 @@
-const DateTime = luxon.DateTime;
-const API_URL = './componentes.json';
+document.addEventListener('DOMContentLoaded', () => {
+    cargarComponentes();
+    inicializarBotonesCalculo();
+});
 
 class Componente {
     constructor(tipo, valor, imagen, x = 0, y = 0) {
@@ -24,14 +26,14 @@ class Circuito {
 
     calcularResistenciaTotal() {
         return this.componentes
-            .filter(({ tipo }) => tipo === 'resistencia')
-            .reduce((total, { valor }) => total + parseFloat(valor), 0);
+            .filter(c => c.tipo === 'resistor')
+            .reduce((total, c) => total + c.valor, 0);
     }
 
     calcularVoltajeTotal() {
         return this.componentes
-            .filter(({ tipo }) => tipo === 'bateria' || tipo === 'transformador')
-            .reduce((total, { valor }) => total + parseFloat(valor), 0);
+            .filter(c => c.tipo === 'bateria' || c.tipo === 'transformador')
+            .reduce((total, c) => total + c.valor, 0);
     }
 
     calcularCorriente() {
@@ -41,55 +43,100 @@ class Circuito {
     }
 
     guardarComponentes() {
-        const componentesConMetodos = this.componentes.map(({ tipo, valor, imagen, x, y }) => ({
-            tipo, valor, imagen, x, y
+        const componentesParaGuardar = this.componentes.map(c => ({
+            tipo: c.tipo,
+            valor: c.valor,
+            imagen: c.imagen,
+            x: c.x,
+            y: c.y
         }));
-        localStorage.setItem('componentes', JSON.stringify(componentesConMetodos));
-        localStorage.setItem('fechaGuardado', DateTime.now().toISO());
+        localStorage.setItem('componentes', JSON.stringify(componentesParaGuardar));
     }
 
     cargarComponentes() {
-        const componentesGuardados = JSON.parse(localStorage.getItem('componentes')) || [];
-        if (componentesGuardados.length > 0) {
-            this.componentes = componentesGuardados.map(({ tipo, valor, imagen, x, y }) =>
-                new Componente(tipo, valor, imagen, x, y)
-            );
-            const fechaGuardado = localStorage.getItem('fechaGuardado');
-            if (fechaGuardado) {
-                const fechaGuardadoFormat = DateTime.fromISO(fechaGuardado).toFormat('dd LLL yyyy HH:mm:ss');
-                Swal.fire(`Componentes cargados. Última modificación: ${fechaGuardadoFormat}`);
-            }
-            // Llamar a mostrarComponentesMesaGuardados después de cargarComponentes
-            mostrarComponentesMesaGuardados();
+        const componentesGuardados = JSON.parse(localStorage.getItem('componentes'));
+        if (componentesGuardados) {
+            this.componentes = componentesGuardados.map(c => new Componente(c.tipo, c.valor, c.imagen, c.x, c.y));
+            mostrarComponentesMesaGuardados(this.componentes);
         }
     }
 }
 
 const circuito = new Circuito();
 
-actualizarComponentesDisponibles();
-crearBotonesCalculo();
+function cargarComponentes() {
+    fetch('components.json')
+        .then(response => response.json())
+        .then(data => mostrarComponentesDisponibles(data))
+        .catch(error => console.error('Error al cargar los componentes:', error));
+}
 
-function crearBotonesCalculo() {
+function mostrarComponentesDisponibles(componentes) {
+    const lista = document.getElementById('componentes-disponibles');
+    lista.innerHTML = '';
+
+    componentes.forEach(componente => {
+        const li = document.createElement('li');
+        li.classList.add('componente');
+        li.setAttribute('draggable', 'true');
+        li.setAttribute('data-tipo', componente.tipo);
+        li.setAttribute('data-valor', componente.valor);
+        li.innerHTML = `
+            <img src="${componente.imagen}" alt="${componente.tipo}" />
+            <span>${componente.tipo} (${componente.valor})</span>
+        `;
+        li.addEventListener('dragstart', event => {
+            event.dataTransfer.setData('text/plain', JSON.stringify(componente));
+        });
+        lista.appendChild(li);
+    });
+
+    document.getElementById('mesa-grande').addEventListener('dragover', event => {
+        event.preventDefault();
+    });
+
+    document.getElementById('mesa-grande').addEventListener('drop', event => {
+        event.preventDefault();
+        const componente = JSON.parse(event.dataTransfer.getData('text/plain'));
+        const nuevoComponente = new Componente(componente.tipo, componente.valor, componente.imagen, event.clientX - event.target.offsetLeft, event.clientY - event.target.offsetTop);
+        circuito.agregarComponente(nuevoComponente);
+        mostrarComponentesMesaGuardados(circuito.componentes);
+    });
+}
+
+function mostrarComponentesMesaGuardados(componentes) {
+    const mesa = document.getElementById('mesa-grande');
+    mesa.innerHTML = '';
+
+    componentes.forEach(componente => {
+        const div = document.createElement('div');
+        div.classList.add('componente-en-mesa');
+        div.style.left = `${componente.x}px`;
+        div.style.top = `${componente.y}px`;
+        div.innerHTML = `
+            <img src="${componente.imagen}" alt="${componente.tipo}" />
+            <span>${componente.tipo} (${componente.valor})</span>
+        `;
+        mesa.appendChild(div);
+    });
+}
+
+function inicializarBotonesCalculo() {
     const opcionesCalculo = document.getElementById('opciones-calculo');
 
     const botones = [
         { text: "Calcular Resistencia Total", onclick: calcularResistenciaTotal },
         { text: "Calcular Voltaje Total", onclick: calcularVoltajeTotal },
-        { text: "Calcular Corriente", onclick: calcularCorriente }
+        { text: "Calcular Corriente", onclick: calcularCorriente },
+        { text: "Resetear", onclick: resetear }
     ];
 
-    botones.forEach(({ text, onclick }) => {
+    botones.forEach(boton => {
         const button = document.createElement('button');
-        button.textContent = text;
-        button.addEventListener('click', onclick);
+        button.textContent = boton.text;
+        button.addEventListener('click', boton.onclick);
         opcionesCalculo.appendChild(button);
     });
-
-    const botonReset = document.createElement('button');
-    botonReset.textContent = 'Resetear';
-    botonReset.addEventListener('click', sweetAlertReseteo);
-    opcionesCalculo.appendChild(botonReset);
 
     const menuCalculo = document.getElementById('menu-calculo');
     menuCalculo.style.display = 'block';
@@ -101,9 +148,7 @@ function crearBotonesCalculo() {
 function resetear() {
     circuito.componentes = [];
     circuito.guardarComponentes();
-    actualizarComponentesDisponibles();
-    const mesaGrande = document.getElementById('mesa-grande');
-    mesaGrande.innerHTML = '';
+    mostrarComponentesMesaGuardados(circuito.componentes);
     Swal.fire('Circuito reseteado exitosamente', '', 'success');
 }
 
@@ -117,124 +162,4 @@ function calcularVoltajeTotal() {
 
 function calcularCorriente() {
     Swal.fire(`La corriente total del circuito es: ${circuito.calcularCorriente()} Amperios`, '', 'success');
-}
-
-function actualizarComponentesDisponibles() {
-    fetch(API_URL)
-        .then(response => response.json())
-        .then(disponibles => {
-            const lista = document.getElementById('componentes-disponibles');
-            lista.innerHTML = '';
-
-            disponibles.forEach(({ tipo, valor, imagen }) => {
-                const li = document.createElement('li');
-                li.classList.add('componente');
-                li.setAttribute('draggable', 'true');
-                li.dataset.componente = JSON.stringify({ tipo, valor, imagen });
-
-                const img = document.createElement('img');
-                img.src = imagen;
-                img.width = 50;
-
-                const nombre = document.createElement('span');
-                nombre.textContent = `${tipo.charAt(0).toUpperCase() + tipo.slice(1)} (${valor})`;
-
-                li.appendChild(img);
-                li.appendChild(nombre);
-                lista.appendChild(li);
-            });
-
-            lista.addEventListener('dragstart', event => {
-                const componente = event.target.dataset.componente;
-                event.dataTransfer.setData('componente', componente);
-            });
-        })
-        .catch(error => console.error('Error cargando los componentes disponibles:', error));
-}
-
-function mostrarComponentesMesaGuardados() {
-    circuito.componentes.forEach(componente => agregarComponenteMesa(componente));
-}
-
-function agregarComponenteMesa(componente, x = Math.random() * 90, y = Math.random() * 90) {
-    const mesaGrande = document.getElementById('mesa-grande');
-
-    const div = document.createElement('div');
-    div.classList.add('componente-enMesa');
-    div.style.left = `${x}%`;
-    div.style.top = `${y}%`;
-
-    const img = document.createElement('img');
-    img.src = componente.imagen;
-
-    const nombre = document.createElement('span');
-    nombre.textContent = `${componente.tipo.charAt(0).toUpperCase() + componente.tipo.slice(1)} (${componente.valor})`;
-
-    const botonEliminar = document.createElement('button');
-    botonEliminar.textContent = 'Eliminar';
-    botonEliminar.addEventListener('click', () => {
-        mesaGrande.removeChild(div);
-        circuito.componentes = circuito.componentes.filter(c => c !== componente);
-        circuito.guardarComponentes();
-    });
-
-    div.appendChild(img);
-    div.appendChild(nombre);
-    div.appendChild(botonEliminar);
-    mesaGrande.appendChild(div);
-
-    div.addEventListener('mousedown', (e) => {
-        const desplazamientoX = e.clientX - div.getBoundingClientRect().left;
-        const desplazamientoY = e.clientY - div.getBoundingClientRect().top;
-
-        function onMouseMove(event) {
-            div.style.left = `${event.clientX - desplazamientoX - mesaGrande.getBoundingClientRect().left}px`;
-            div.style.top = `${event.clientY - desplazamientoY - mesaGrande.getBoundingClientRect().top}px`;
-        }
-
-        function onMouseUp() {
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
-
-            componente.x = parseFloat(div.style.left) / mesaGrande.clientWidth * 100;
-            componente.y = parseFloat(div.style.top) / mesaGrande.clientHeight * 100;
-            circuito.guardarComponentes();
-        }
-
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-    });
-}
-
-const mesaGrande = document.getElementById('mesa-grande');
-
-mesaGrande.addEventListener('dragover', event => {
-    event.preventDefault();
-});
-
-mesaGrande.addEventListener('drop', event => {
-    event.preventDefault();
-    const data = event.dataTransfer.getData('componente');
-    const componente = JSON.parse(data);
-    componente.x = (event.clientX - mesaGrande.getBoundingClientRect().left) / mesaGrande.clientWidth * 100;
-    componente.y = (event.clientY - mesaGrande.getBoundingClientRect().top) / mesaGrande.clientHeight * 100;
-    const nuevoComponente = new Componente(componente.tipo, componente.valor, componente.imagen, componente.x, componente.y);
-    circuito.agregarComponente(nuevoComponente);
-    agregarComponenteMesa(nuevoComponente, componente.x, componente.y);
-});
-
-function sweetAlertReseteo() {
-    Swal.fire({
-        title: '¿Estás seguro?',
-        text: "¡Esto eliminará todos los componentes del circuito!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Sí, resetear'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            resetear();
-        }
-    });
 }
